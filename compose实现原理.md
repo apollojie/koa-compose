@@ -9,56 +9,56 @@
 
 ## 洋葱模型的实现原理
     洋葱模型的灵魂之处在于：Array.prototype.reduce()；如果对reduce不熟悉，可以去mdn回顾一下reduce的使用。
-    将各个函数作为前一个function的next参数传递过去
+    compose的实现核心是：将各个函数作为前一个function的next参数传递过去
 
     一、洋葱模型的同步实现：
-        ```
-            var app = {
-                middlewares: [],
-                use(fn){
-                    app.middlewares.push(fn)
-                },
-                compose(){
-                    function dispatch(i){
-                        if(i === app.middlewares.length) return
-                        const fn = app.middlewares[i]
-                        // 将每一个函数作为前一个函数的next参数传递。
-                        return fn(() => dispatch(i+1))
-                    }
-                    dispatch(0)
+    
+        var app = {
+            middlewares: [],
+            use(fn){
+                app.middlewares.push(fn)
+            },
+            compose(){
+                function dispatch(i){
+                    if(i === app.middlewares.length) return
+                    const fn = app.middlewares[i]
+                    // 将每一个函数作为前一个函数的next参数传递。
+                    return fn(() => dispatch(i+1))
                 }
+                dispatch(0)
             }
-            // next是() => dispatch(i+1)的引用
-            app.use(next => { 
-                console.log('1--before')
-                next()
-                console.log('1--after')
-            })
-            app.use(next => {
-                console.log('2--before')
-                next()
-                console.log('2--after')
-            })
-            app.use(next => {
-                console.log('3--before')
-                next()
-                console.log('3--after')
-            })
-            app.compose()
+        }
+        // next是() => dispatch(i+1)的引用
+        app.use(next => { 
+            console.log('1--before')
+            next()
+            console.log('1--after')
+        })
+        app.use(next => {
+            console.log('2--before')
+            next()
+            console.log('2--after')
+        })
+        app.use(next => {
+            console.log('3--before')
+            next()
+            console.log('3--after')
+        })
+        app.compose()
 
-        // 运行结果为：
-        //     1--before
-        //     2--before
-        //     3--before
-        //     3--after
-        //     2--after
-        //     1--after
-    ```
+    // 运行结果为：
+    //     1--before
+    //     2--before
+    //     3--before
+    //     3--after
+    //     2--after
+    //     1--after
+    
     
     
     二、洋葱模型的同步实现：（代码在koa-compose包）
         查看了koa-compose源码，其中compose的源代码只有寥寥几十行，对比同步实现区别在引入了async/await支持。代码实现如下
-        ```
+        
             function compose(middlewares){
                 // 容错处理
                 if(!Array.isArray(middlewares)) throw new Error('middlewares must be an  array!')
@@ -87,12 +87,12 @@
                     }
                 }
             }
-        ```
+        
     
     三、reduce实现compose
         
         reduce()可以作为一个高阶函数，用于函数的 compose。将后一个函数作为前一个函数的参数传递。
-```
+
         function add5(x) {
             return x + 5;
         }
@@ -107,4 +107,3 @@
         
         const chain = [add5, div2, sub3].reduce((a, b) => (...args) => a(b(...args)))
         chain(1) === 4
-```
