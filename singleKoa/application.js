@@ -26,7 +26,7 @@ class Application{
         return (req,res) => {
             let ctx = that.createContext(req, res)
             let respond = () => that.responseBody(ctx)
-            let fn = this.compose();
+            let fn = that.compose();
             return fn(ctx,Promise.resolve()).then(respond)
             // that.callbackFunc(ctx).then(respond)
         }
@@ -45,12 +45,14 @@ class Application{
             let index = -1;
             return dispatch(0)
             function dispatch(i) {
+                console.log('执行dispath',i)
                 if(i <= index) return Promise.reject('')
                 index = i;
 
                 const fn = middlewares[i]
                 if(i === middlewares.length) fn = next
                 if(!fn) return Promise.resolve()
+                console.log('执行dispath----',i)
                 try{
                     return Promise.resolve(fn(context, dispatch.bind(null, i+1)))
                 } catch(err) {
@@ -111,11 +113,13 @@ class Application{
      * @param {Object} ctx ctx实例
      */
     responseBody(ctx) {
-        let context = ctx.body
-        if(typeof context === 'string') {
+        let content = ctx.body
+        if(typeof content === 'string') {
             ctx.res.end(content)
         } else if(typeof content === 'object') {
             ctx.res.end(JSON.stringify(content))
+        } else {
+            ctx.res.end(content)
         }
     }
 }
